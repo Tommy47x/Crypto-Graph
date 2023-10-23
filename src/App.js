@@ -1,15 +1,11 @@
 import './App.css';
 import React, { useState, useEffect, useRef } from 'react';
 import { Container, Navbar, Offcanvas } from 'react-bootstrap';
-import ListGroup from 'react-bootstrap/ListGroup';
+import CryptoCurrencySelector from './CryptoCurrencySelector.js';
+import TimeRangeSelector from './TimeRangeSelector';
+import ChartContainer from './ChartContainer';
 import Chart from 'chart.js/auto';
-import axios from 'axios';
 import moment from 'moment';
-
-//TO-DO: Impartire cod actual in componente functionale
-//TO-DO: Implementare functionalitate de selectare a monedei - > DONE
-//TO-DO: Implementare functionalitate de selectare a perioadei(OPTIONAL)
-//TO-DO: Resize la grafic -> DONE
 
 function App() {
   const [show, setShow] = useState(false);
@@ -17,23 +13,40 @@ function App() {
   const handleShow = () => setShow(true);
   const [selectedCurrency, setSelectedCurrency] = useState('cardano');
   const [priceData, setPriceData] = useState([]);
-  const startOfMonth = moment().startOf('month');
-  const endOfMonth = moment();
-  const daysInMonth = endOfMonth.diff(startOfMonth, 'days') + 1;
-  const labels = Array.from({ length: daysInMonth }, (_, i) =>
-    startOfMonth.clone().add(i, 'days').format('MMM D')
-  );
+  const [selectedTimeRange, setSelectedTimeRange] = useState('today');
   const chartRef = useRef(null);
 
   useEffect(() => {
     const fetchData = async () => {
-      const result = await axios.get(`https://api.coingecko.com/api/v3/coins/${selectedCurrency}/market_chart?vs_currency=usd&days=30`);
-      const prices = result.data.prices.map(price => price[1]);
+      let days = 1;
+      switch (selectedTimeRange) {
+        case '7d':
+          days = 7;
+          break;
+        case '14d':
+          days = 14;
+          break;
+        case '30d':
+          days = 30;
+          break;
+        case '90d':
+          days = 90;
+          break;
+        case '180d':
+          days = 180;
+          break;
+        default:
+          days = 1;
+      }
+
+      const response = await fetch(`https://api.coingecko.com/api/v3/coins/${selectedCurrency}/market_chart?vs_currency=usd&days=${days}`);
+      const result = await response.json();
+      const prices = result.prices.map(price => price[1]);
       setPriceData(prices);
     };
 
     fetchData();
-  }, [selectedCurrency]);
+  }, [selectedCurrency, selectedTimeRange]);
 
   useEffect(() => {
     let color;
@@ -57,7 +70,10 @@ function App() {
     const chart = new Chart(chartRef.current, {
       type: 'line',
       data: {
-        labels: labels,
+        labels: priceData.map(price => {
+          const date = moment.unix(price[0] / 1000);
+          return date.isValid() ? date.format('') : '';
+        }),
         datasets: [
           {
             label: `${selectedCurrency} Price`,
@@ -78,11 +94,6 @@ function App() {
     };
   }, [priceData, selectedCurrency]);
 
-  const handleCurrencySelect = (currency) => {
-    setSelectedCurrency(currency);
-    handleClose();
-  };
-
   return (
     <div className="App">
       <Navbar bg="dark" variant="dark">
@@ -94,24 +105,24 @@ function App() {
         <Offcanvas.Header closeButton>
           <Offcanvas.Title>Crypto-Currency Graphic Selector</Offcanvas.Title>
         </Offcanvas.Header>
-
         <Offcanvas.Body>
-          Select the crypto-currency you want to see the price of:
-          <ListGroup as="ul" active>
-            <ListGroup.Item as="li" onClick={() => handleCurrencySelect('cardano')}> Cardano</ListGroup.Item>
-            <ListGroup.Item as="li" onClick={() => handleCurrencySelect('bitcoin')}>Bitcoin</ListGroup.Item>
-            <ListGroup.Item as="li" onClick={() => handleCurrencySelect('ethereum')}>Ethereum </ListGroup.Item>
-            <ListGroup.Item as="li" onClick={() => handleCurrencySelect('solana')}>Solana</ListGroup.Item>
-          </ListGroup>
+          <CryptoCurrencySelector
+            selectedCurrency={selectedCurrency}
+            setSelectedCurrency={setSelectedCurrency}
+            handleClose={handleClose}
+          />
+          <TimeRangeSelector
+            selectedTimeRange={selectedTimeRange}
+            setSelectedTimeRange={setSelectedTimeRange}
+            handleClose={handleClose}
+          />
+          <div className="card" id="last-price">
+            Last Price: {priceData.length > 0 ? `$${priceData[priceData.length - 1].toFixed(2)}` : '-'}
+          </div>
         </Offcanvas.Body>
       </Offcanvas>
-
-      <Container>
-        <div id="chart-container">
-          <canvas id="myChart" ref={chartRef}></canvas>
-        </div>
-      </Container>
-    </div >
+      <ChartContainer chartRef={chartRef} />
+    </div>
   );
 }
 

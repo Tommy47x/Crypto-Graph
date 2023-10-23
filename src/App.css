@@ -1,7 +1,26 @@
+body {
+    font-family: 'Comic Sans MS';
+  }
+
 #chart-container {
-    width: 80%;
-    height: 80%;
+    width: 65%;
+    height: 65%;
     position: absolute;
+    right: 5%;
+    left: 17%;
 }
 
+#chart {
+    width: 100%;
+    height: 100%;
+    right: 5%;
+    left: 17%;
+}
 
+#last-price {
+    position: absolute;
+    padding: 10px;
+    background-color: #fff;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
