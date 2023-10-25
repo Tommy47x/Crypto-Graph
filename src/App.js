@@ -1,24 +1,24 @@
 import './App.css';
-import React, { useState, useEffect, useRef } from 'react';
-import { Container, Navbar, Offcanvas } from 'react-bootstrap';
-import CryptoCurrencySelector from './CryptoCurrencySelector.js';
-import TimeRangeSelector from './TimeRangeSelector';
-import ChartContainer from './ChartContainer';
-import Chart from 'chart.js/auto';
-import moment from 'moment';
+import React, { useState, useEffect, useRef } from 'react'; // Imported so we can use React Hooks (Official)
+import { Container, Navbar, Offcanvas } from 'react-bootstrap'; // Imported so we can use Bootstrap components (Official)
+import CryptoCurrencySelector from './CryptoCurrencySelector.js'; // Imported so we can use the CryptoCurrencySelector component(Our own)
+import TimeRangeSelector from './TimeRangeSelector'; // Imported so we can use the TimeRangeSelector component(Our own)
+import ChartContainer from './ChartContainer'; // Imported so we can use the ChartContainer component(Our own)
+import Chart from 'chart.js/auto'; // Imported so we can use the Chart.js library (Official)
+import moment from 'moment'; // Imported so we can use the moment.js library (Official)
 
 function App() {
-  const [show, setShow] = useState(false);
-  const handleClose = () => setShow(false);
-  const handleShow = () => setShow(true);
-  const [selectedCurrency, setSelectedCurrency] = useState('cardano');
-  const [priceData, setPriceData] = useState([]);
-  const [selectedTimeRange, setSelectedTimeRange] = useState('today');
-  const chartRef = useRef(null);
+  const [show, setShow] = useState(false); // Responsible for showing/hiding the Offcanvas component
+  const handleClose = () => setShow(false); // Responsible for hiding the Offcanvas component
+  const handleShow = () => setShow(true); // Responsible for showing the Offcanvas component
+  const [selectedCurrency, setSelectedCurrency] = useState('cardano'); // Responsible for storing the selected currency
+  const [priceData, setPriceData] = useState([]); // Responsible for storing the price data
+  const [selectedTimeRange, setSelectedTimeRange] = useState('today'); // Responsible for storing the selected time range
+  const chartRef = useRef(null); // Responsible for storing the reference to the chart
 
-  useEffect(() => {
+  useEffect(() => { // Responsible for fetching the price data
     const fetchData = async () => {
-      let days = 1;
+      let days = 1;  // Default value
       switch (selectedTimeRange) {
         case '7d':
           days = 7;
@@ -38,19 +38,19 @@ function App() {
         default:
           days = 1;
       }
-
+      // Fetch the price data from the CoinGecko API
       const response = await fetch(`https://api.coingecko.com/api/v3/coins/${selectedCurrency}/market_chart?vs_currency=usd&days=${days}`);
-      const result = await response.json();
-      const prices = result.prices.map(price => price[1]);
-      setPriceData(prices);
+      const result = await response.json(); // Convert the response to JSON
+      const prices = result.prices.map(price => price[1]); // Extract the prices from the result
+      setPriceData(prices); // Update the price data
     };
 
     fetchData();
   }, [selectedCurrency, selectedTimeRange]);
 
-  useEffect(() => {
+  useEffect(() => { // UseEffect responsible for creating the chart
     let color;
-    switch (selectedCurrency) {
+    switch (selectedCurrency) { // Set the color based on the selected currency
       case 'cardano':
         color = 'rgba(10, 110, 132, 89.2)';
         break;
@@ -67,7 +67,7 @@ function App() {
         color = 'rgba(10, 110, 132, 89.2)';
     }
 
-    const chart = new Chart(chartRef.current, {
+    const chart = new Chart(chartRef.current, { // Create the chart
       type: 'line',
       data: {
         labels: priceData.map(price => {
@@ -94,7 +94,7 @@ function App() {
     };
   }, [priceData, selectedCurrency]);
 
-  return (
+  return ( // 
     <div className="App">
       <Navbar bg="dark" variant="dark">
         <Container>
@@ -117,7 +117,7 @@ function App() {
             handleClose={handleClose}
           />
           <div className="card" id="last-price">
-            Last Price: {priceData.length > 0 ? `$${priceData[priceData.length - 1].toFixed(2)}` : '-'}
+            Last Price: {priceData.length > 0 ? `$${priceData[priceData.length - 1].toFixed(3)}` : '-'}
           </div>
         </Offcanvas.Body>
       </Offcanvas>
